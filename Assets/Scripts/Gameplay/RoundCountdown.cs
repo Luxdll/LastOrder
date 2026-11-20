@@ -38,6 +38,7 @@ public class RoundCountdown : MonoBehaviour
             {
                 startButton.gameObject.SetActive(false);
                 playerMovement.enabled = true;
+                Cursor.lockState = CursorLockMode.Locked;
                 yield break;
             }
 
