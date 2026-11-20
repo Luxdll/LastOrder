@@ -8,6 +8,7 @@ public class RoundCountdown : MonoBehaviour
 {
     [SerializeField] private Button startButton;
     [SerializeField] private TMP_Text countdownText;
+    [SerializeField] private PlayerMovement playerMovement;
 
     private const int CountdownSeconds = 5;
 
@@ -36,6 +37,7 @@ public class RoundCountdown : MonoBehaviour
             if (remaining <= 0)
             {
                 startButton.gameObject.SetActive(false);
+                playerMovement.enabled = true;
                 yield break;
             }
 
