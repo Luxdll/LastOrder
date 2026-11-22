@@ -1,0 +1,4 @@
+Zombie model: bachosoftdesign
+Source: https://poly.pizza/m/xqEzosAVYX
+License: Creative Commons Attribution
+Changes: imported into Unity; adjusted scale and animation settings.
