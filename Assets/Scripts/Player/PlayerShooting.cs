@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public class PlayerShooting : MonoBehaviour
 {
     [SerializeField] private float range = 50f;
+    [SerializeField, Min(0.01f)] private float fireInterval = 0.25f;
     [SerializeField, Min(0.01f)] private float tracerDuration = 0.22f;
 
     private const float TracerLength = 0.8f;
@@ -12,6 +13,7 @@ public class PlayerShooting : MonoBehaviour
     private Camera aimCamera;
     private InputAction attackAction;
     private LineRenderer tracer;
+    private float nextShotTime;
 
     private Vector3 tracerStart;
     private Vector3 tracerEnd;
@@ -33,9 +35,12 @@ public class PlayerShooting : MonoBehaviour
 
     private void Update()
     {
-        if (Cursor.lockState == CursorLockMode.Locked && attackAction.WasPressedThisFrame())
+        bool wantsToShoot = attackAction.IsPressed() || attackAction.WasPressedThisFrame();
+
+        if (Cursor.lockState == CursorLockMode.Locked && wantsToShoot && Time.time >= nextShotTime)
         {
             Shoot();
+            nextShotTime = Time.time + fireInterval;
         }
 
         if (tracer.enabled)
