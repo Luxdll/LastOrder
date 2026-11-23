@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public class PlayerShooting : MonoBehaviour
 {
     [SerializeField] private float range = 50f;
+    [SerializeField, Min(1)] private int damage = 25;
     [SerializeField, Min(0.01f)] private float fireInterval = 0.25f;
     [SerializeField, Min(0.01f)] private float tracerDuration = 0.22f;
 
@@ -23,7 +24,10 @@ public class PlayerShooting : MonoBehaviour
     private void Awake()
     {
         aimCamera = Camera.main;
-        attackAction = InputSystem.actions.FindAction("Player/Attack", throwIfNotFound: true);
+        attackAction = InputSystem.actions.FindAction(
+            "Player/Attack",
+            throwIfNotFound: true
+        );
 
         tracer = GetComponent<LineRenderer>();
         tracer.useWorldSpace = true;
@@ -35,9 +39,12 @@ public class PlayerShooting : MonoBehaviour
 
     private void Update()
     {
-        bool wantsToShoot = attackAction.IsPressed() || attackAction.WasPressedThisFrame();
+        bool wantsToShoot =
+            attackAction.IsPressed() || attackAction.WasPressedThisFrame();
 
-        if (Cursor.lockState == CursorLockMode.Locked && wantsToShoot && Time.time >= nextShotTime)
+        if (Cursor.lockState == CursorLockMode.Locked &&
+            wantsToShoot &&
+            Time.time >= nextShotTime)
         {
             Shoot();
             nextShotTime = Time.time + fireInterval;
@@ -51,18 +58,30 @@ public class PlayerShooting : MonoBehaviour
 
     private void Shoot()
     {
-        Ray aimRay = aimCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        Ray aimRay = aimCamera.ViewportPointToRay(
+            new Vector3(0.5f, 0.5f, 0f)
+        );
+
         tracerEnd = aimRay.GetPoint(range);
 
         if (Physics.Raycast(aimRay, out RaycastHit hit, range))
         {
             tracerEnd = hit.point;
+
+            Health health = hit.collider.GetComponentInParent<Health>();
+
+            if (health != null)
+            {
+                health.TakeDamage(damage);
+            }
+
             Debug.Log($"Hit: {hit.collider.name}", hit.collider);
         }
 
         tracerStart = transform.position
             + Vector3.up * 0.25f
             + aimCamera.transform.right * 0.65f;
+
         tracerDistance = Vector3.Distance(tracerStart, tracerEnd);
         tracerStartTime = Time.unscaledTime;
         tracer.enabled = true;
@@ -70,7 +89,8 @@ public class PlayerShooting : MonoBehaviour
 
     private void UpdateTracer()
     {
-        float progress = (Time.unscaledTime - tracerStartTime) / tracerDuration;
+        float progress =
+            (Time.unscaledTime - tracerStartTime) / tracerDuration;
 
         if (progress >= 1f)
         {
@@ -81,7 +101,14 @@ public class PlayerShooting : MonoBehaviour
         float headDistance = progress * (tracerDistance + TracerLength);
         float tailDistance = Mathf.Max(0f, headDistance - TracerLength);
 
-        tracer.SetPosition(0, Vector3.MoveTowards(tracerStart, tracerEnd, tailDistance));
-        tracer.SetPosition(1, Vector3.MoveTowards(tracerStart, tracerEnd, headDistance));
+        tracer.SetPosition(
+            0,
+            Vector3.MoveTowards(tracerStart, tracerEnd, tailDistance)
+        );
+
+        tracer.SetPosition(
+            1,
+            Vector3.MoveTowards(tracerStart, tracerEnd, headDistance)
+        );
     }
 }
