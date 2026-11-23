@@ -1429,6 +1429,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   range: 50
+  damage: 25
   fireInterval: 0.25
   tracerDuration: 0.22
 --- !u!120 &1339983346
@@ -1661,6 +1662,7 @@ GameObject:
   - component: {fileID: 1714096945}
   - component: {fileID: 1714096946}
   - component: {fileID: 1714096947}
+  - component: {fileID: 1714096948}
   m_Layer: 0
   m_Name: Zombie
   m_TagString: Untagged
@@ -1755,6 +1757,19 @@ CapsuleCollider:
   m_Height: 1.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!114 &1714096948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1714096942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14af439463ad96545bb24a8f1c6d80fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  destroyDelay: 3.5
 --- !u!1001 &1858240845
 PrefabInstance:
   m_ObjectHideFlags: 0
