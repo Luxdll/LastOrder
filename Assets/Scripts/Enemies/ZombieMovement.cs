@@ -24,10 +24,15 @@ public class ZombieMovement : MonoBehaviour
         animator = GetComponentInChildren<Animator>();
         health = GetComponent<Health>();
 
-        if (target != null)
-        {
-            targetHealth = target.GetComponent<Health>();
-        }
+        Initialize(target);
+    }
+
+    public void Initialize(PlayerMovement newTarget)
+    {
+        target = newTarget;
+        targetHealth = target != null
+            ? target.GetComponent<Health>()
+            : null;
     }
 
     private void Update()
