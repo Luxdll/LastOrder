@@ -1301,6 +1301,8 @@ GameObject:
   - component: {fileID: 1339983344}
   - component: {fileID: 1339983345}
   - component: {fileID: 1339983346}
+  - component: {fileID: 1339983347}
+  - component: {fileID: 1339983348}
   m_Layer: 2
   m_Name: Player
   m_TagString: Untagged
@@ -1546,6 +1548,31 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
+--- !u!114 &1339983347
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1339983339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ae0e4d4d75336a42896621fe53ad174, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 10
+--- !u!114 &1339983348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1339983339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9536add898cd9e5428bba2c13e7cde33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1418358152
 GameObject:
   m_ObjectHideFlags: 0
@@ -1721,6 +1748,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 1339983344}
+  attackRange: 1.4
+  damage: 1
+  hitDelay: 0.8
+  attackDuration: 2.9
 --- !u!114 &1714096946
 MonoBehaviour:
   m_ObjectHideFlags: 0
