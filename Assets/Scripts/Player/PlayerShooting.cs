@@ -7,22 +7,31 @@ public class PlayerShooting : MonoBehaviour
 {
     [SerializeField] private OrderBagGun bagPrefab;
     [SerializeField, Min(1f)] private float aimRange = 20f;
-    [SerializeField, Min(0.1f)] private float throwInterval = 0.7f;
+    [SerializeField, Min(0.4f)] private float throwInterval = 0.7f;
     [SerializeField, Min(1f)] private float throwSpeed = 14f;
+    [SerializeField, Min(0f)] private float releaseDelay = 0.2f;
 
     [SerializeField]
     private Vector3 throwOffset =
         new Vector3(0.45f, 0.35f, 0.65f);
 
+    private static readonly int ThrowHash =
+        Animator.StringToHash("Throw");
+
     private Camera aimCamera;
     private PlayerMovement movement;
+    private Animator animator;
     private InputAction attackAction;
+
     private float nextThrowTime;
+    private float releaseTime;
+    private bool isThrowPending;
 
     private void Awake()
     {
         aimCamera = Camera.main;
         movement = GetComponent<PlayerMovement>();
+        animator = GetComponentInChildren<Animator>();
 
         attackAction = InputSystem.actions.FindAction(
             "Player/Attack",
@@ -37,6 +46,11 @@ public class PlayerShooting : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        CancelPendingThrow();
+    }
+
     private void LateUpdate()
     {
         if (bagPrefab == null ||
@@ -44,19 +58,56 @@ public class PlayerShooting : MonoBehaviour
             !movement.isActiveAndEnabled ||
             Cursor.lockState != CursorLockMode.Locked)
         {
+            CancelPendingThrow();
+            return;
+        }
+
+        if (isThrowPending)
+        {
+            if (Time.time >= releaseTime)
+            {
+                isThrowPending = false;
+                ThrowBag();
+            }
+
             return;
         }
 
         bool wantsToThrow =
-            attackAction.IsPressed() || attackAction.WasPressedThisFrame();
+            attackAction.IsPressed() ||
+            attackAction.WasPressedThisFrame();
 
         if (!wantsToThrow || Time.time < nextThrowTime)
         {
             return;
         }
 
-        nextThrowTime = Time.time + throwInterval;
-        ThrowBag();
+        isThrowPending = true;
+        releaseTime = Time.time + releaseDelay;
+
+        nextThrowTime = Time.time +
+            Mathf.Max(throwInterval, releaseDelay + 0.1f);
+
+        if (animator != null && animator.isActiveAndEnabled)
+        {
+            animator.ResetTrigger(ThrowHash);
+            animator.SetTrigger(ThrowHash);
+        }
+    }
+
+    private void CancelPendingThrow()
+    {
+        if (!isThrowPending)
+        {
+            return;
+        }
+
+        isThrowPending = false;
+
+        if (animator != null)
+        {
+            animator.ResetTrigger(ThrowHash);
+        }
     }
 
     private void ThrowBag()
