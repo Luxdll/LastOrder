@@ -801,7 +801,7 @@ MonoBehaviour:
   player: {fileID: 1339983344}
   spawnPointsRoot: {fileID: 1642641008}
   exitGate: {fileID: 721283943}
-  totalZombies: 30
+  totalZombies: 20
   maxAlive: 10
   spawnRadius: 1.5
   minPlayerDistance: 6
