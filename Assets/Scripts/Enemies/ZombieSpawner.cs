@@ -11,8 +11,9 @@ public class ZombieSpawner : MonoBehaviour
 
     [SerializeField, Min(1)] private int totalZombies = 50;
     [SerializeField, Min(1)] private int maxAlive = 10;
-    [SerializeField, Min(0f)] private float spawnRadius = 2f;
+    [SerializeField, Min(0f)] private float spawnRadius = 1.5f;
     [SerializeField, Min(1f)] private float minPlayerDistance = 6f;
+    [SerializeField, Min(1f)] private float minZombieDistance = 5f;
 
     private readonly List<Health> spawnedZombies = new();
 
@@ -26,6 +27,7 @@ public class ZombieSpawner : MonoBehaviour
     private int spawnedCount;
     private int killedCount;
     private int aliveCount;
+    private int nextSpawnPointIndex;
     private bool hasStarted;
     private float nextSpawnTime;
 
@@ -86,11 +88,25 @@ public class ZombieSpawner : MonoBehaviour
             spawnPoints[i] = spawnPointsRoot.GetChild(i);
         }
 
+        ShuffleSpawnPoints();
+
         navigationFilter = new NavMeshQueryFilter
         {
             agentTypeID = prefabAgent.agentTypeID,
             areaMask = NavMesh.AllAreas
         };
+    }
+
+    private void ShuffleSpawnPoints()
+    {
+        for (int i = spawnPoints.Length - 1; i > 0; i--)
+        {
+            int randomIndex = Random.Range(0, i + 1);
+
+            Transform temporary = spawnPoints[i];
+            spawnPoints[i] = spawnPoints[randomIndex];
+            spawnPoints[randomIndex] = temporary;
+        }
     }
 
     private void Update()
@@ -142,10 +158,14 @@ public class ZombieSpawner : MonoBehaviour
     {
         Physics.SyncTransforms();
 
-        for (int attempt = 0; attempt < 30; attempt++)
+        int maxAttempts = Mathf.Max(30, spawnPoints.Length * 3);
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            Transform spawnPoint =
-                spawnPoints[Random.Range(0, spawnPoints.Length)];
+            Transform spawnPoint = spawnPoints[nextSpawnPointIndex];
+
+            nextSpawnPointIndex =
+                (nextSpawnPointIndex + 1) % spawnPoints.Length;
 
             Vector2 offset = Random.insideUnitCircle * spawnRadius;
 
@@ -166,6 +186,11 @@ public class ZombieSpawner : MonoBehaviour
 
             if (direction.sqrMagnitude <
                 minPlayerDistance * minPlayerDistance)
+            {
+                continue;
+            }
+
+            if (!IsFarFromOtherZombies(hit.position))
             {
                 continue;
             }
@@ -199,6 +224,32 @@ public class ZombieSpawner : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool IsFarFromOtherZombies(Vector3 position)
+    {
+        float minimumDistanceSquared =
+            minZombieDistance * minZombieDistance;
+
+        foreach (Health zombieHealth in spawnedZombies)
+        {
+            if (zombieHealth == null || zombieHealth.IsDead)
+            {
+                continue;
+            }
+
+            Vector3 difference =
+                zombieHealth.transform.position - position;
+
+            difference.y = 0f;
+
+            if (difference.sqrMagnitude < minimumDistanceSquared)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void HandleZombieDeath()
