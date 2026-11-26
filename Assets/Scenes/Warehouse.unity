@@ -6537,6 +6537,7 @@ GameObject:
   - component: {fileID: 1339983348}
   - component: {fileID: 1339983349}
   - component: {fileID: 1339983350}
+  - component: {fileID: 1339983351}
   m_Layer: 2
   m_Name: Player
   m_TagString: Untagged
@@ -6839,6 +6840,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawner: {fileID: 176667005}
   music: {fileID: 1932335446}
+--- !u!114 &1339983351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1339983339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fe8b3dfdcf7c74478cf60f04ba8d081, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxTiltDegrees: 20
+  deadZone: 0.1
+  smoothing: 10
 --- !u!1 &1343884037
 GameObject:
   m_ObjectHideFlags: 0

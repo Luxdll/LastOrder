@@ -12,12 +12,14 @@ public class PlayerMovement : MonoBehaviour
     private Transform visual;
     private Transform cameraTransform;
     private InputAction moveAction;
+    private GyroMovementInput gyroInput;
     private float verticalSpeed;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
+        gyroInput = GetComponent<GyroMovementInput>();
 
         if (animator != null)
         {
@@ -35,6 +37,16 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         Vector2 input = moveAction.ReadValue<Vector2>();
+
+        Vector2 tiltInput =
+            gyroInput != null && gyroInput.isActiveAndEnabled
+                ? gyroInput.ReadInput()
+                : Vector2.zero;
+
+        if (input.sqrMagnitude <= 0.01f)
+        {
+            input = tiltInput;
+        }
 
         Quaternion cameraYaw = Quaternion.Euler(
             0f,
