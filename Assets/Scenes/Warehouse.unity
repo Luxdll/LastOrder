@@ -2475,10 +2475,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0468e9db50912440992ae90d96df302, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  range: 50
-  damage: 25
-  fireInterval: 0.25
-  tracerDuration: 0.22
+  bagPrefab: {fileID: 2582138014792676072, guid: 5a3bd7088713f214e9ed42753bde68e8, type: 3}
+  aimRange: 20
+  throwInterval: 0.7
+  throwSpeed: 20
+  throwOffset: {x: 0.45, y: 0.35, z: 0.65}
 --- !u!120 &1339983346
 LineRenderer:
   serializedVersion: 2

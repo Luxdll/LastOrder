@@ -1,114 +1,145 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(LineRenderer))]
+[RequireComponent(typeof(PlayerMovement))]
+[DefaultExecutionOrder(100)]
 public class PlayerShooting : MonoBehaviour
 {
-    [SerializeField] private float range = 50f;
-    [SerializeField, Min(1)] private int damage = 25;
-    [SerializeField, Min(0.01f)] private float fireInterval = 0.25f;
-    [SerializeField, Min(0.01f)] private float tracerDuration = 0.22f;
+    [SerializeField] private OrderBagGun bagPrefab;
+    [SerializeField, Min(1f)] private float aimRange = 20f;
+    [SerializeField, Min(0.1f)] private float throwInterval = 0.7f;
+    [SerializeField, Min(1f)] private float throwSpeed = 14f;
 
-    private const float TracerLength = 0.8f;
+    [SerializeField]
+    private Vector3 throwOffset =
+        new Vector3(0.45f, 0.35f, 0.65f);
 
     private Camera aimCamera;
+    private PlayerMovement movement;
     private InputAction attackAction;
-    private LineRenderer tracer;
-    private float nextShotTime;
-
-    private Vector3 tracerStart;
-    private Vector3 tracerEnd;
-    private float tracerDistance;
-    private float tracerStartTime;
+    private float nextThrowTime;
 
     private void Awake()
     {
         aimCamera = Camera.main;
+        movement = GetComponent<PlayerMovement>();
+
         attackAction = InputSystem.actions.FindAction(
             "Player/Attack",
             throwIfNotFound: true
         );
 
-        tracer = GetComponent<LineRenderer>();
-        tracer.useWorldSpace = true;
-        tracer.positionCount = 2;
-        tracer.startWidth = 0.03f;
-        tracer.endWidth = 0.08f;
-        tracer.enabled = false;
+        LineRenderer oldTracer = GetComponent<LineRenderer>();
+
+        if (oldTracer != null)
+        {
+            oldTracer.enabled = false;
+        }
     }
 
-    private void Update()
+    private void LateUpdate()
     {
-        bool wantsToShoot =
+        if (bagPrefab == null ||
+            aimCamera == null ||
+            !movement.isActiveAndEnabled ||
+            Cursor.lockState != CursorLockMode.Locked)
+        {
+            return;
+        }
+
+        bool wantsToThrow =
             attackAction.IsPressed() || attackAction.WasPressedThisFrame();
 
-        if (Cursor.lockState == CursorLockMode.Locked &&
-            wantsToShoot &&
-            Time.time >= nextShotTime)
+        if (!wantsToThrow || Time.time < nextThrowTime)
         {
-            Shoot();
-            nextShotTime = Time.time + fireInterval;
+            return;
         }
 
-        if (tracer.enabled)
-        {
-            UpdateTracer();
-        }
+        nextThrowTime = Time.time + throwInterval;
+        ThrowBag();
     }
 
-    private void Shoot()
+    private void ThrowBag()
     {
+        Physics.SyncTransforms();
+
         Ray aimRay = aimCamera.ViewportPointToRay(
             new Vector3(0.5f, 0.5f, 0f)
         );
 
-        tracerEnd = aimRay.GetPoint(range);
+        Vector3 aimPoint = aimRay.GetPoint(aimRange);
 
-        if (Physics.Raycast(aimRay, out RaycastHit hit, range))
+        if (Physics.Raycast(
+                aimRay,
+                out RaycastHit hit,
+                aimRange,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Ignore))
         {
-            tracerEnd = hit.point;
-
-            Health health = hit.collider.GetComponentInParent<Health>();
-
-            if (health != null)
-            {
-                health.TakeDamage(damage);
-            }
-
-            Debug.Log($"Hit: {hit.collider.name}", hit.collider);
+            aimPoint = hit.point;
         }
 
-        tracerStart = transform.position
-            + Vector3.up * 0.25f
-            + aimCamera.transform.right * 0.65f;
+        Quaternion cameraYaw = Quaternion.Euler(
+            0f,
+            aimCamera.transform.eulerAngles.y,
+            0f
+        );
 
-        tracerDistance = Vector3.Distance(tracerStart, tracerEnd);
-        tracerStartTime = Time.unscaledTime;
-        tracer.enabled = true;
-    }
+        Vector3 spawnPosition =
+            transform.position + cameraYaw * throwOffset;
 
-    private void UpdateTracer()
-    {
-        float progress =
-            (Time.unscaledTime - tracerStartTime) / tracerDuration;
+        Vector3 spawnCenter =
+            spawnPosition + Vector3.up * 0.15f;
 
-        if (progress >= 1f)
+        Vector3 chestPosition =
+            transform.position + Vector3.up * throwOffset.y;
+
+        if (Vector3.Dot(
+                aimPoint - spawnPosition,
+                aimRay.direction) <= 0f)
         {
-            tracer.enabled = false;
             return;
         }
 
-        float headDistance = progress * (tracerDistance + TracerLength);
-        float tailDistance = Mathf.Max(0f, headDistance - TracerLength);
+        if (Physics.Linecast(
+                chestPosition,
+                spawnCenter,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Ignore))
+        {
+            return;
+        }
 
-        tracer.SetPosition(
-            0,
-            Vector3.MoveTowards(tracerStart, tracerEnd, tailDistance)
+        if (Physics.CheckSphere(
+                spawnCenter,
+                0.23f,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Ignore))
+        {
+            return;
+        }
+
+        OrderBagGun bag = Instantiate(
+            bagPrefab,
+            spawnPosition,
+            cameraYaw
         );
 
-        tracer.SetPosition(
-            1,
-            Vector3.MoveTowards(tracerStart, tracerEnd, headDistance)
+        bag.gameObject.layer =
+            LayerMask.NameToLayer("Ignore Raycast");
+
+        Vector3 displacement = aimPoint - bag.CenterPosition;
+
+        float flightTime = Mathf.Clamp(
+            displacement.magnitude / throwSpeed,
+            0.2f,
+            1.2f
         );
+
+        Vector3 initialVelocity =
+            displacement / flightTime
+            - Physics.gravity * flightTime * 0.5f;
+
+        bag.Launch(initialVelocity, movement);
     }
 }
