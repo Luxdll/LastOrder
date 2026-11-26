@@ -7,8 +7,9 @@ public class ZombieSpawner : MonoBehaviour
     [SerializeField] private ZombieMovement zombiePrefab;
     [SerializeField] private PlayerMovement player;
     [SerializeField] private Transform spawnPointsRoot;
+    [SerializeField] private SwingGate exitGate;
 
-    [SerializeField, Min(1)] private int totalZombies = 100;
+    [SerializeField, Min(1)] private int totalZombies = 50;
     [SerializeField, Min(1)] private int maxAlive = 10;
     [SerializeField, Min(0f)] private float spawnRadius = 2f;
     [SerializeField, Min(1f)] private float minPlayerDistance = 6f;
@@ -31,18 +32,19 @@ public class ZombieSpawner : MonoBehaviour
     public int AliveCount => aliveCount;
     public int KilledCount => killedCount;
     public int RemainingKills => Mathf.Max(0, totalZombies - killedCount);
+    public bool IsCleared { get; private set; }
     public bool IsFinished { get; private set; }
-    public bool IsVictory { get; private set; }
 
     private void Start()
     {
         if (zombiePrefab == null ||
             player == null ||
             spawnPointsRoot == null ||
-            spawnPointsRoot.childCount == 0)
+            spawnPointsRoot.childCount == 0 ||
+            exitGate == null)
         {
             Debug.LogError(
-                "Назначь Zombie Prefab, Player и Spawn Points Root.",
+                "Назначь Zombie Prefab, Player, Spawn Points Root и Exit Gate.",
                 this
             );
 
@@ -62,15 +64,27 @@ public class ZombieSpawner : MonoBehaviour
             return;
         }
 
+        NavMeshAgent prefabAgent =
+            zombiePrefab.GetComponent<NavMeshAgent>();
+
+        if (prefabAgent == null ||
+            zombiePrefab.GetComponent<Health>() == null)
+        {
+            Debug.LogError(
+                "На префабе зомби нужны NavMeshAgent и Health.",
+                zombiePrefab
+            );
+
+            enabled = false;
+            return;
+        }
+
         spawnPoints = new Transform[spawnPointsRoot.childCount];
 
         for (int i = 0; i < spawnPoints.Length; i++)
         {
             spawnPoints[i] = spawnPointsRoot.GetChild(i);
         }
-
-        NavMeshAgent prefabAgent =
-            zombiePrefab.GetComponent<NavMeshAgent>();
 
         navigationFilter = new NavMeshQueryFilter
         {
@@ -82,6 +96,7 @@ public class ZombieSpawner : MonoBehaviour
     private void Update()
     {
         if (IsFinished ||
+            IsCleared ||
             playerHealth.IsDead ||
             !player.isActiveAndEnabled)
         {
@@ -115,11 +130,11 @@ public class ZombieSpawner : MonoBehaviour
 
         if (playerHealth.IsDead)
         {
-            Finish(false);
+            FinishDefeat();
         }
-        else if (killedCount >= totalZombies)
+        else if (!IsCleared && killedCount >= totalZombies)
         {
-            Finish(true);
+            CompleteWarehouse();
         }
     }
 
@@ -192,10 +207,17 @@ public class ZombieSpawner : MonoBehaviour
         killedCount++;
     }
 
-    private void Finish(bool victory)
+    private void CompleteWarehouse()
+    {
+        IsCleared = true;
+        exitGate.Open();
+
+        Debug.Log("Склад зачищен. Выход во двор открыт.", this);
+    }
+
+    private void FinishDefeat()
     {
         IsFinished = true;
-        IsVictory = victory;
 
         player.enabled = false;
 
@@ -217,10 +239,7 @@ public class ZombieSpawner : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        Debug.Log(
-            victory ? "Все зомби уничтожены. Победа!" : "Поражение.",
-            this
-        );
+        Debug.Log("Поражение.", this);
     }
 
     private void OnDestroy()
