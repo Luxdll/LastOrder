@@ -1,11 +1,15 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.OnScreen;
 
 [RequireComponent(typeof(PlayerMovement))]
 [DefaultExecutionOrder(100)]
 public class PlayerShooting : MonoBehaviour
 {
     [SerializeField] private OrderBagGun bagPrefab;
+    [SerializeField] private OnScreenButton mobileFireButton;
+
     [SerializeField, Min(1f)] private float aimRange = 20f;
     [SerializeField, Min(0.4f)] private float throwInterval = 0.7f;
     [SerializeField, Min(1f)] private float throwSpeed = 14f;
@@ -53,10 +57,13 @@ public class PlayerShooting : MonoBehaviour
 
     private void LateUpdate()
     {
+        bool inputAvailable = MobileInputMode.IsActive ||
+            Cursor.lockState == CursorLockMode.Locked;
+
         if (bagPrefab == null ||
             aimCamera == null ||
             !movement.isActiveAndEnabled ||
-            Cursor.lockState != CursorLockMode.Locked)
+            !inputAvailable)
         {
             CancelPendingThrow();
             return;
@@ -73,11 +80,7 @@ public class PlayerShooting : MonoBehaviour
             return;
         }
 
-        bool wantsToThrow =
-            attackAction.IsPressed() ||
-            attackAction.WasPressedThisFrame();
-
-        if (!wantsToThrow || Time.time < nextThrowTime)
+        if (!ReadThrowInput() || Time.time < nextThrowTime)
         {
             return;
         }
@@ -93,6 +96,25 @@ public class PlayerShooting : MonoBehaviour
             animator.ResetTrigger(ThrowHash);
             animator.SetTrigger(ThrowHash);
         }
+    }
+
+    private bool ReadThrowInput()
+    {
+        if (MobileInputMode.IsActive)
+        {
+            if (mobileFireButton != null &&
+                mobileFireButton.isActiveAndEnabled &&
+                mobileFireButton.control is ButtonControl button)
+            {
+                return button.isPressed ||
+                    button.wasPressedThisFrame;
+            }
+
+            return false;
+        }
+
+        return attackAction.IsPressed() ||
+            attackAction.WasPressedThisFrame();
     }
 
     private void CancelPendingThrow()

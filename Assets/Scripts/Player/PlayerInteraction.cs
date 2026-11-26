@@ -1,12 +1,15 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.OnScreen;
 
 [RequireComponent(typeof(Health), typeof(PlayerMovement))]
 public class PlayerInteraction : MonoBehaviour
 {
     [SerializeField, Min(0.1f)] private float pickupRadius = 2f;
     [SerializeField] private TMP_Text promptText;
+    [SerializeField] private OnScreenButton mobilePickupButton;
 
     private Health health;
     private PlayerMovement movement;
@@ -26,9 +29,12 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Update()
     {
+        bool inputAvailable = MobileInputMode.IsActive ||
+            Cursor.lockState == CursorLockMode.Locked;
+
         if (health.IsDead ||
             !movement.isActiveAndEnabled ||
-            Cursor.lockState != CursorLockMode.Locked)
+            !inputAvailable)
         {
             SetPrompt(string.Empty);
             return;
@@ -48,16 +54,32 @@ public class PlayerInteraction : MonoBehaviour
             return;
         }
 
-        SetPrompt("E — подобрать аптечку");
+        SetPrompt(
+            MobileInputMode.IsActive
+                ? "Нажмите «ПОДОБРАТЬ»"
+                : "E — подобрать аптечку"
+        );
 
-        Keyboard keyboard = Keyboard.current;
-
-        if (keyboard != null &&
-            keyboard.eKey.wasPressedThisFrame &&
-            pickup.TryPickUp(health))
+        if (ReadPickupInput() && pickup.TryPickUp(health))
         {
             SetPrompt(string.Empty);
         }
+    }
+
+    private bool ReadPickupInput()
+    {
+        if (MobileInputMode.IsActive)
+        {
+            return mobilePickupButton != null &&
+                mobilePickupButton.isActiveAndEnabled &&
+                mobilePickupButton.control is ButtonControl button &&
+                button.wasPressedThisFrame;
+        }
+
+        Keyboard keyboard = Keyboard.current;
+
+        return keyboard != null &&
+            keyboard.eKey.wasPressedThisFrame;
     }
 
     private HealthPickup FindClosestPickup()

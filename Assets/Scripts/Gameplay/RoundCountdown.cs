@@ -40,7 +40,15 @@ public class RoundCountdown : MonoBehaviour
                 startButton.gameObject.SetActive(false);
                 crosshair.SetActive(true);
                 playerMovement.enabled = true;
-                Cursor.lockState = CursorLockMode.Locked;
+
+                bool mobileMode = MobileInputMode.IsActive;
+
+                Cursor.lockState = mobileMode
+                    ? CursorLockMode.None
+                    : CursorLockMode.Locked;
+
+                Cursor.visible = mobileMode;
+
                 yield break;
             }
 

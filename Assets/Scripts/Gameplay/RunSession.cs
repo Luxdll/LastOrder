@@ -62,11 +62,14 @@ public class RunSession : MonoBehaviour
 
     private void Update()
     {
+        bool inputAvailable = MobileInputMode.IsActive ||
+            Cursor.lockState == CursorLockMode.Locked;
+
         if (!HasStarted &&
             !IsFinished &&
             !health.IsDead &&
             movement.isActiveAndEnabled &&
-            Cursor.lockState == CursorLockMode.Locked)
+            inputAvailable)
         {
             startTime = Time.time;
             HasStarted = true;
