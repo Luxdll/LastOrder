@@ -32,4 +32,19 @@ public class Health : MonoBehaviour
             Died?.Invoke();
         }
     }
+
+    public bool Heal(int amount)
+    {
+        if (amount <= 0 || IsDead || currentHealth >= maxHealth)
+        {
+            return false;
+        }
+
+        currentHealth = (int)Math.Min(
+            (long)currentHealth + amount,
+            maxHealth
+        );
+
+        return true;
+    }
 }
